@@ -1,0 +1,31 @@
+
+Route::get('/', function () {
+    return view('welcome');
+});
+
+Route::post('/upload-file', function(Request $request){
+    // dd($request->file('file'));
+    $nama = $request->file('file')->getClientOriginalName();
+    $ext = $request->getClientOriginalExtension();
+    $request->file('file')->store('', 'google');
+    // Storage::disk('google')->store($nama, $path);
+    return redirect()->back();
+})->name('upload');
+
+Route::get('file-get', function(){
+    $filename = "JADWAL-SP.docx.doc (1).docx";
+
+    $dir = '/';
+    $recursive = false; // Get subdirectories also?
+    $contents = collect(Storage::cloud()->listContents());
+    // dd($contents[0]);
+
+    $file = $contents->where('type', '=', 'file')->where('filename', '=', pathinfo($filename, PATHINFO_FILENAME))->where('extension', '=', pathinfo($filename, PATHINFO_EXTENSION))->first(); // there can be duplicate file names!
+    //return $file; // array with file info
+
+    $rawData = Storage::disk('google')->get($file['path']);
+    // dd($rawData);
+    return response($rawData, 200)
+        ->header('ContentType', $file['mimetype'])
+        ->header('Content-Disposition', "attachment; filename=$filename");
+})->name('get-file');
